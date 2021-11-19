@@ -2,7 +2,8 @@ from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
-from random import randrange
+
+# from random import randrange
 
 app = FastAPI()
 
@@ -35,7 +36,9 @@ def get_post(post_id: int):
     post = [post for post in my_posts if post["id"] == post_id]
     if post:
         return {"post_detail": f"Here is your post {post}"}
-    raise HTTPException(status_code=404, detail=f"post {post_id} not found")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
+    )
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
@@ -48,3 +51,28 @@ def create_posts(post: Post):
         "message": "Post created successfully.",
         "data": post_dict,
     }
+
+
+@app.put("/posts/{post_id}")
+def update_post(post_id: int, post: Post):
+    try:
+        post_dict = post.dict()
+        post_dict["id"] = post_id
+        my_posts[post_id - 1] = post_dict
+        return {"message": "Post updated successfully.", "data": post_dict}
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
+        )
+
+
+@app.delete("/posts/{post_id}")
+def delete_post(post_id: int):
+    post = [post for post in my_posts if post["id"] == post_id]
+    if post:
+        my_posts.remove(post[0])
+        print(f"post {post_id} was deleted")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
+    )
