@@ -33,12 +33,8 @@ def get_posts():
 
 @app.get("/posts/{post_id}")
 def get_post(post_id: int):
-    post = [post for post in my_posts if post["id"] == post_id]
-    if post:
-        return {"post_detail": f"Here is your post {post}"}
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
-    )
+    post = find_post_by_id(post_id)
+    return post
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
@@ -55,24 +51,36 @@ def create_posts(post: Post):
 
 @app.put("/posts/{post_id}")
 def update_post(post_id: int, post: Post):
-    try:
-        post_dict = post.dict()
-        post_dict["id"] = post_id
-        my_posts[post_id - 1] = post_dict
-        return {"message": "Post updated successfully.", "data": post_dict}
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
-        )
+    post_index = find_post_index(post_id)
+    my_posts[post_index] = post.dict()
+    return {"message": "Post updated successfully.", "data": my_posts[post_index]}
 
 
 @app.delete("/posts/{post_id}")
 def delete_post(post_id: int):
-    post = [post for post in my_posts if post["id"] == post_id]
-    if post:
-        my_posts.remove(post[0])
+    try:
+        my_posts.pop(find_post_index(post_id))
         print(f"post {post_id} was deleted")
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except:
+        raise
+
+
+    # helper functions
+def find_post_by_id(post_id: int):
+    post = [post for post in my_posts if post["id"] == post_id]
+    if post:
+        return post[0]
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
     )
+
+
+def find_post_index(post_id: int):
+    for index, post in enumerate(my_posts):
+        if post["id"] == post_id:
+            return index
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
+    )
+
