@@ -66,7 +66,7 @@ def delete_post(post_id: int):
         raise
 
 
-    # helper functions
+# helper functions
 def find_post_by_id(post_id: int):
     post = [post for post in my_posts if post["id"] == post_id]
     if post:
