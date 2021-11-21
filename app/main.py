@@ -2,6 +2,8 @@ from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
+import psycopg2
+from psycopg2.extras import RealDictCursor  # to get the columns names
 
 # from random import randrange
 
@@ -12,6 +14,21 @@ my_posts = [
     {"title": "Hello", "content": "World", "id": 1},
     {"title": "favorite foods", "content": "Pizza", "id": 2},
 ]
+
+try:
+    conn = psycopg2.connect(
+        host="localhost",
+        database="fastapi",
+        user="postgres",
+        password="postgres",
+        cursor_factory=RealDictCursor,
+    )
+    print("Connected to database")
+    cursor = conn.cursor()
+except (Exception, psycopg.Error) as error:
+    print("Unable to connect to the database")
+    print("Error:", error)
+
 
 # Pydantic Schema
 class Post(BaseModel):
@@ -83,4 +100,3 @@ def find_post_index(post_id: int):
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
     )
-
