@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor  # to get the columns names
+from time import sleep
 
 # from random import randrange
 
@@ -15,26 +16,30 @@ my_posts = [
     {"title": "favorite foods", "content": "Pizza", "id": 2},
 ]
 
-try:
-    conn = psycopg2.connect(
-        host="localhost",
-        database="fastapi",
-        user="postgres",
-        password="postgres",
-        cursor_factory=RealDictCursor,
-    )
-    print("Connected to database")
-    cursor = conn.cursor()
-except (Exception, psycopg.Error) as error:
-    print("Unable to connect to the database")
-    print("Error:", error)
+while True:
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="fastapi",
+            user="postgres",
+            password="postgres",
+            cursor_factory=RealDictCursor,
+        )
+        print("Connected to database")
+        cursor = conn.cursor()
+        break
+    except Exception as error:
+        print("Unable to connect to the database")
+        print("Error:", error)
+        sleep(5)
+        continue
 
 
 # Pydantic Schema
 class Post(BaseModel):
     title: str
     content: str
-    published: bool = True
+    is_published: bool = True
     rating: Optional[int] = None
 
 
@@ -45,7 +50,8 @@ async def root():
 
 @app.get("/posts")
 def get_posts():
-    return {"data": my_posts}
+    # return {"data": my_posts}
+    return {"data": get_posts_from_db()}
 
 
 @app.get("/posts/{post_id}")
@@ -57,13 +63,15 @@ def get_post(post_id: int):
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
     # print(post)
-    post_dict = post.dict()
-    post_dict["id"] = len(my_posts) + 1
-    my_posts.append(post_dict)
-    return {
-        "message": "Post created successfully.",
-        "data": post_dict,
-    }
+    # post_dict = post.dict()
+    # post_dict["id"] = len(my_posts) + 1
+    # my_posts.append(post_dict)
+    # return {
+    #     "message": "Post created successfully.",
+    #     "data": post_dict,
+    # }
+    new_post = create_post_in_db(post)
+    return {"message": "Post created successfully.", "data": new_post}
 
 
 @app.put("/posts/{post_id}")
@@ -100,3 +108,17 @@ def find_post_index(post_id: int):
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
     )
+
+def get_posts_from_db():
+    cursor.execute("SELECT * FROM posts")
+    posts = cursor.fetchall()
+    return posts
+
+def create_post_in_db(post: Post):
+    cursor.execute(
+        "INSERT INTO posts (title, content, is_published, rating) VALUES (%s, %s, %s, %s) RETURNING *",
+        (post.title, post.content, post.is_published, post.rating),
+    )
+    created_post = cursor.fetchone()
+    conn.commit()
+    return {"Post created": created_post}
