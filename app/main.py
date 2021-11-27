@@ -1,16 +1,22 @@
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor  # to get the columns names
 from time import sleep
+from . import models
+from .db import engine, get_db
+from sqlalchemy.orm import Session
 
 # from random import randrange
 
 app = FastAPI()
 
 # db
+models.Base.metadata.create_all(bind=engine)
+
+
 while True:
     try:
         conn = psycopg2.connect(
@@ -36,6 +42,14 @@ class Post(BaseModel):
     content: str
     is_published: bool = True
     rating: Optional[int] = None
+
+
+# test endpoint
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {"status": "success", "data": posts}
+
 
 # routes (endpoints)
 @app.get("/")
@@ -83,6 +97,7 @@ def update_post(post_id: int, post: Post):
             detail=f"Post with id {post_id} not found",
         )
     return {"message": "Post updated successfully.", "data": updated_post}
+
 
 # helper functions
 def get_posts_from_db():
