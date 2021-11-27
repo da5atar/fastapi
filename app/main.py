@@ -11,11 +11,6 @@ from time import sleep
 app = FastAPI()
 
 # db
-my_posts = [
-    {"title": "Hello", "content": "World", "id": 1},
-    {"title": "favorite foods", "content": "Pizza", "id": 2},
-]
-
 while True:
     try:
         conn = psycopg2.connect(
@@ -42,7 +37,7 @@ class Post(BaseModel):
     is_published: bool = True
     rating: Optional[int] = None
 
-
+# routes (endpoints)
 @app.get("/")
 async def root():
     return {"message": "Welcome to my API!!"}
@@ -50,69 +45,59 @@ async def root():
 
 @app.get("/posts")
 def get_posts():
-    # return {"data": my_posts}
     return {"data": get_posts_from_db()}
 
 
 @app.get("/posts/{post_id}")
 def get_post(post_id: int):
-    post = find_post_by_id(post_id)
-    return post
+    post = get_post_from_db(post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
+    return {"data": post}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
-    # print(post)
-    # post_dict = post.dict()
-    # post_dict["id"] = len(my_posts) + 1
-    # my_posts.append(post_dict)
-    # return {
-    #     "message": "Post created successfully.",
-    #     "data": post_dict,
-    # }
     new_post = create_post_in_db(post)
     return {"message": "Post created successfully.", "data": new_post}
 
 
+@app.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(post_id: int):
+    deleted_post = delete_post_in_db(post_id)
+    if deleted_post is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id {post_id} not found",
+        )
+
+
 @app.put("/posts/{post_id}")
 def update_post(post_id: int, post: Post):
-    post_index = find_post_index(post_id)
-    my_posts[post_index] = post.dict()
-    return {"message": "Post updated successfully.", "data": my_posts[post_index]}
-
-
-@app.delete("/posts/{post_id}")
-def delete_post(post_id: int):
-    try:
-        my_posts.pop(find_post_index(post_id))
-        print(f"post {post_id} was deleted")
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    except:
-        raise
-
+    updated_post = update_post_in_db(post_id, post)
+    if updated_post == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id {post_id} not found",
+        )
+    return {"message": "Post updated successfully.", "data": updated_post}
 
 # helper functions
-def find_post_by_id(post_id: int):
-    post = [post for post in my_posts if post["id"] == post_id]
-    if post:
-        return post[0]
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
-    )
-
-
-def find_post_index(post_id: int):
-    for index, post in enumerate(my_posts):
-        if post["id"] == post_id:
-            return index
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail=f"post {post_id} not found"
-    )
-
 def get_posts_from_db():
     cursor.execute("SELECT * FROM posts")
     posts = cursor.fetchall()
     return posts
+
+
+def get_post_from_db(post_id):
+    cursor.execute(
+        "SELECT * FROM posts WHERE id = %s", (post_id,)
+    )  # comma after post_id is needed for single value
+    post = cursor.fetchone()
+    return post
+
 
 def create_post_in_db(post: Post):
     cursor.execute(
@@ -122,3 +107,26 @@ def create_post_in_db(post: Post):
     created_post = cursor.fetchone()
     conn.commit()
     return {"Post created": created_post}
+
+
+def delete_post_in_db(post_id):
+    cursor.execute("DELETE FROM posts WHERE id = %s RETURNING *", (post_id,))
+    deleted_post = cursor.fetchone()
+    conn.commit()
+    return deleted_post
+
+
+def update_post_in_db(post_id, post_update):
+    cursor.execute(
+        "UPDATE posts SET title = %s, content = %s, is_published = %s, rating = %s WHERE id = %s RETURNING *",
+        (
+            post_update.title,
+            post_update.content,
+            post_update.is_published,
+            post_update.rating,
+            post_id,
+        ),
+    )
+    updated_post = cursor.fetchone()
+    conn.commit()
+    return updated_post
