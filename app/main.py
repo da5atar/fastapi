@@ -1,11 +1,8 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi.params import Body
-from pydantic import BaseModel
-from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor  # to get the columns names
 from time import sleep
-from . import models
+from . import models, schemas
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 
@@ -34,14 +31,6 @@ while True:
         print("Error:", error)
         sleep(5)
         continue
-
-
-# Pydantic Schema
-class Post(BaseModel):
-    title: str
-    content: str
-    is_published: bool = True
-    rating: Optional[int] = None
 
 
 # test endpoint
@@ -81,7 +70,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+def create_posts(post: schemas.Post, db: Session = Depends(get_db)):
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()
@@ -104,7 +93,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{post_id}")
-def update_post(post_id: int, post: Post, db: Session = Depends(get_db)):
+def update_post(post_id: int, post: schemas.Post, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_update = post_query.first()
     if not post_to_update:
@@ -133,7 +122,7 @@ def get_post_from_db(post_id):
     return post
 
 
-def create_post_in_db(post: Post):
+def create_post_in_db(post: schemas.Post):
     cursor.execute(
         "INSERT INTO posts (title, content, is_published, rating) VALUES (%s, %s, %s, %s) RETURNING *",
         (post.title, post.content, post.is_published, post.rating),

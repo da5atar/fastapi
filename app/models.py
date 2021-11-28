@@ -1,11 +1,10 @@
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
-
 from .database import Base
 
 
-# models
+# models (SQLAlchemy)
 class Post(Base):
     __tablename__ = "posts"
 
