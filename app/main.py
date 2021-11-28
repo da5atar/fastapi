@@ -2,19 +2,17 @@ from time import sleep
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .database import engine, get_db
+from .utils import hash_password
 
 app = FastAPI()
 
 # db
 models.Base.metadata.create_all(bind=engine)
 
-# passlib
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # routes (endpoints)
 # posts
@@ -87,7 +85,7 @@ def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(ge
     response_model=schemas.CreateUserResponse,
 )
 def create_user(user: schemas.CreateUser, db: Session = Depends(get_db)):
-    hasched_pwd = pwd_context.hash(user.password)
+    hasched_pwd = hash_password(user.password)
     user.password = hasched_pwd
     new_user = models.User(**user.dict())
     db.add(new_user)
