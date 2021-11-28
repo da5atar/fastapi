@@ -15,6 +15,7 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 # routes (endpoints)
+# posts
 @app.get("/")
 async def root():
     return {"message": "Welcome to my API!!"}
@@ -62,7 +63,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{post_id}", response_model=schemas.PostResponse)
+@app.put("/posts/{post_id}", response_model=schemas.CreateUserResponse)
 def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_update = post_query.first()
@@ -75,3 +76,12 @@ def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(ge
     db.commit()
     updated_post = post_query.first()
     return updated_post
+
+# users
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.CreateUserResponse)
+def create_user(user: schemas.CreateUser, db: Session = Depends(get_db)):
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user

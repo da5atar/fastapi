@@ -1,6 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
+from pydantic.networks import EmailStr
 
 # Pydantic Schemas
 
@@ -26,6 +27,7 @@ class UpdatePost(Post):
 
 
 # Responses
+# posts
 
 
 class PostResponse(Post):
@@ -36,3 +38,22 @@ class PostResponse(Post):
         orm_mode = (
             True  # makes pydantic read the fields from the ORM (SQLAlchemy) model
         )
+
+
+# users
+class User(BaseModel):
+    email: EmailStr
+
+
+class CreateUser(User):
+    password: str
+
+
+class CreateUserResponse(User):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+        
+
