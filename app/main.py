@@ -6,7 +6,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor  # to get the columns names
 from time import sleep
 from . import models
-from .db import engine, get_db
+from .database import engine, get_db
 from sqlalchemy.orm import Session
 
 # from random import randrange
@@ -47,8 +47,14 @@ class Post(BaseModel):
 # test endpoint
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    return {"status": "success", "data": posts}
+    try:
+        posts_query = db.query(models.Post)
+        posts = posts_query.all()
+        print(posts_query)
+        return {"status": "success", "data": posts}
+    except Exception as error:
+        print(error)
+        return {"status": "error"}
 
 
 # routes (endpoints)
@@ -58,44 +64,57 @@ async def root():
 
 
 @app.get("/posts")
-def get_posts():
-    return {"data": get_posts_from_db()}
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {"data": posts}
 
 
 @app.get("/posts/{post_id}")
-def get_post(post_id: int):
-    post = get_post_from_db(post_id)
-    if not post:
+def get_post(post_id: int, db: Session = Depends(get_db)):
+    requested_post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if not requested_post:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id {post_id} not found",
         )
-    return {"data": post}
+    return {"data": requested_post}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
-    new_post = create_post_in_db(post)
+def create_posts(post: Post, db: Session = Depends(get_db)):
+    new_post = models.Post(**post.dict())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)  # to get the new post
     return {"message": "Post created successfully.", "data": new_post}
 
 
-@app.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(post_id: int):
-    deleted_post = delete_post_in_db(post_id)
-    if deleted_post is None:
+@app.delete("/posts/{post_id}")
+def delete_post(post_id: int, db: Session = Depends(get_db)):
+    post_query = db.query(models.Post).filter(models.Post.id == post_id)
+    post_to_delete = post_query.first()
+    if not post_to_delete:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {post_id} not found",
         )
+    post_query.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.put("/posts/{post_id}")
-def update_post(post_id: int, post: Post):
-    updated_post = update_post_in_db(post_id, post)
-    if updated_post == None:
+def update_post(post_id: int, post: Post, db: Session = Depends(get_db)):
+    post_query = db.query(models.Post).filter(models.Post.id == post_id)
+    post_to_update = post_query.first()
+    if not post_to_update:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {post_id} not found",
         )
+    post_query.update(post.dict(), synchronize_session=False)
+    db.commit()
+    updated_post = post_query.first()
     return {"message": "Post updated successfully.", "data": updated_post}
 
 
