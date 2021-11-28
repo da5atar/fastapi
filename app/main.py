@@ -5,6 +5,7 @@ from time import sleep
 from . import models, schemas
 from .database import engine, get_db
 from sqlalchemy.orm import Session
+from typing import List
 
 # from random import randrange
 
@@ -52,13 +53,13 @@ async def root():
     return {"message": "Welcome to my API!!"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
-    return {"data": posts}
+    return posts
 
 
-@app.get("/posts/{post_id}")
+@app.get("/posts/{post_id}", response_model=schemas.PostResponse)
 def get_post(post_id: int, db: Session = Depends(get_db)):
     requested_post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not requested_post:
@@ -66,16 +67,18 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {post_id} not found",
         )
-    return {"data": requested_post}
+    return requested_post
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse
+)
 def create_posts(post: schemas.CreatePost, db: Session = Depends(get_db)):
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)  # to get the new post
-    return {"message": "Post created successfully.", "data": new_post}
+    return new_post
 
 
 @app.delete("/posts/{post_id}")
@@ -92,7 +95,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{post_id}")
+@app.put("/posts/{post_id}", response_model=schemas.PostResponse)
 def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_update = post_query.first()
@@ -104,7 +107,7 @@ def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(ge
     post_query.update(post.dict(), synchronize_session=False)
     db.commit()
     updated_post = post_query.first()
-    return {"message": "Post updated successfully.", "data": updated_post}
+    return updated_post
 
 
 # helper functions
