@@ -1,18 +1,20 @@
-from fastapi import FastAPI, Response, status, HTTPException, Depends
-import psycopg2
-from psycopg2.extras import RealDictCursor  # to get the columns names
 from time import sleep
-from . import models, schemas
-from .database import engine, get_db
-from sqlalchemy.orm import Session
 from typing import List
 
-# from random import randrange
+from fastapi import Depends, FastAPI, HTTPException, Response, status
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from . import models, schemas
+from .database import engine, get_db
 
 app = FastAPI()
 
 # db
 models.Base.metadata.create_all(bind=engine)
+
+# passlib
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # routes (endpoints)
 # posts
@@ -77,9 +79,16 @@ def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(ge
     updated_post = post_query.first()
     return updated_post
 
+
 # users
-@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.CreateUserResponse)
+@app.post(
+    "/users",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.CreateUserResponse,
+)
 def create_user(user: schemas.CreateUser, db: Session = Depends(get_db)):
+    hasched_pwd = pwd_context.hash(user.password)
+    user.password = hasched_pwd
     new_user = models.User(**user.dict())
     db.add(new_user)
     db.commit()
