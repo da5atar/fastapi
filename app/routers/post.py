@@ -9,13 +9,13 @@ from ..database import get_db
 router = APIRouter()
 
 
-@router.get("/posts", response_model=List[schemas.PostResponse])
+@router.get("/", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
 
 
-@router.get("/posts/{post_id}", response_model=schemas.PostResponse)
+@router.get("/{post_id}", response_model=schemas.PostResponse)
 def get_post(post_id: int, db: Session = Depends(get_db)):
     requested_post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not requested_post:
@@ -27,7 +27,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse
+    "/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse
 )
 def create_posts(post: schemas.CreatePost, db: Session = Depends(get_db)):
     new_post = models.Post(**post.dict())
@@ -37,7 +37,7 @@ def create_posts(post: schemas.CreatePost, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.delete("/posts/{post_id}")
+@router.delete("/{post_id}")
 def delete_post(post_id: int, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_delete = post_query.first()
@@ -51,7 +51,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/posts/{post_id}", response_model=schemas.PostResponse)
+@router.put("/{post_id}", response_model=schemas.PostResponse)
 def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_update = post_query.first()

@@ -17,7 +17,7 @@ async def root():
 
 
 # posts
-app.include_router(post.router)
+app.include_router(post.router, prefix="/posts", tags=["posts"])
 
 # users
-app.include_router(user.router)
+app.include_router(user.router, prefix="/users", tags=["users"])
