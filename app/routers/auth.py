@@ -13,7 +13,10 @@ router = APIRouter()
 
 
 @router.post("/", response_model=schemas.Token)
-async def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(
+    user_credentials: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     user_in_db = (
         db.query(models.User)
         .filter(models.User.email == user_credentials.username)
@@ -33,6 +36,9 @@ async def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Ses
         )
     access_token_expires = timedelta(minutes=60)
     access_token = create_access_token(
-        data={"sub": user_in_db.id}, expires_delta=access_token_expires
+        data={
+            "sub": str(user_in_db.id)
+        },  # subject has to be a string for JWT.decode() to work
+        expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "token_type": "bearer"}
