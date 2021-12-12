@@ -44,7 +44,11 @@ def create_posts(
 
 
 @router.delete("/{post_id}")
-def delete_post(post_id: int, db: Session = Depends(get_db)):
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_delete = post_query.first()
     if not post_to_delete:
@@ -58,7 +62,12 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{post_id}", response_model=schemas.PostResponse)
-def update_post(post_id: int, post: schemas.UpdatePost, db: Session = Depends(get_db)):
+def update_post(
+    post_id: int,
+    post: schemas.UpdatePost,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post_to_update = post_query.first()
     if not post_to_update:
