@@ -36,7 +36,7 @@ def create_posts(
     current_user: models.User = Depends(get_current_user),
 ):
     print(f"{current_user.email} created a post with title: {post.title}")
-    new_post = models.Post(**post.dict())
+    new_post = models.Post(user_id=current_user.id, **post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)  # to get the new post
