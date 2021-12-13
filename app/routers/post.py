@@ -56,6 +56,11 @@ def delete_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {post_id} not found",
         )
+    if post_to_delete.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not the owner of this post",
+        )
     post_query.delete(synchronize_session=False)
     db.commit()
     print(f"{current_user.email} deleted post with id {post_id}")
@@ -75,6 +80,11 @@ def update_post(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {post_id} not found",
+        )
+    if post_to_update.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not the owner of this post",
         )
     post_query.update(post.dict(), synchronize_session=False)
     db.commit()
