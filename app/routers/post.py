@@ -35,7 +35,7 @@ def create_posts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    print(current_user)
+    print(f"{current_user.email} created a post with title: {post.title}")
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()
@@ -58,6 +58,7 @@ def delete_post(
         )
     post_query.delete(synchronize_session=False)
     db.commit()
+    print(f"{current_user.email} deleted post with id {post_id}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -77,5 +78,6 @@ def update_post(
         )
     post_query.update(post.dict(), synchronize_session=False)
     db.commit()
+    print(f"{current_user.email} updated post with id {post_id}")
     updated_post = post_query.first()
     return updated_post
