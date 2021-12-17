@@ -11,8 +11,10 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[schemas.PostResponse])
-def get_posts(db: Session = Depends(get_db), limit: int = 10):
+def get_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0):
     posts = db.query(models.Post).limit(limit).all()
+    if skip > 0:
+        posts = posts[skip:]
     return posts
 
 
