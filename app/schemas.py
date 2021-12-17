@@ -1,11 +1,13 @@
 from datetime import datetime
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 from pydantic.networks import EmailStr
 
 # Pydantic Schemas
 
 # Requests
+# posts
 class Post(BaseModel):
     title: str
     content: str
@@ -26,29 +28,14 @@ class UpdatePost(Post):
     pass
 
 
-# Responses
-# posts
-
-
-class PostResponse(Post):
-    # id: int
-    created_at: datetime
-    user_id: int
-
-    class Config:
-        orm_mode = (
-            True  # makes pydantic read the fields from the ORM (SQLAlchemy) model
-        )
-
-
 # users
 class User(BaseModel):
     email: EmailStr
 
 
-class GetUserResponse(User):
-    id: int
-    created_at: datetime
+class UserInDB(User):
+    # is_active: bool
+    # is_admin: bool
 
     class Config:
         orm_mode = True
@@ -56,14 +43,6 @@ class GetUserResponse(User):
 
 class CreateUser(User):
     password: str
-
-
-class CreateUserResponse(User):
-    id: int
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
 
 
 # login
@@ -79,3 +58,35 @@ class TokenData(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+# Responses
+
+# posts
+class PostResponse(Post):
+    # id: int
+    created_at: datetime
+    user_id: int
+    owner: UserInDB
+
+    class Config:
+        orm_mode = (
+            True  # makes pydantic read the fields from the ORM (SQLAlchemy) model
+        )
+
+
+# users
+class CreateUserResponse(User):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class GetUserResponse(User):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
