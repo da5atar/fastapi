@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, conint
 from pydantic.networks import EmailStr
 
 # Pydantic Schemas
@@ -59,6 +59,10 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+# votes
+class Vote(BaseModel):
+    post_id: int
+    direction: conint(ge=0, le=1)
 
 # Responses
 
@@ -90,3 +94,6 @@ class GetUserResponse(User):
 
     class Config:
         orm_mode = True
+
+
+# votes
