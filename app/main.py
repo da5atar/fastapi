@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 
+from app.oauth2 import ALGORITHM, EXPIRATION_TIME, SECRET_KEY
+
 from . import models
 from .database import engine
 from .routers import post, user, auth
+from .config import settings
 
 app = FastAPI()
 

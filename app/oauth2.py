@@ -8,11 +8,13 @@ from sqlalchemy.orm import Session
 
 from app import database, models, schemas
 
+from .config import settings
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-SECRET_KEY = "7e38d8e88b36fc6aac4f0f6f9907f39b3659a7b661818c6552ac6aaf490e52d90"
-ALGORITHM = "HS256"
-EXPIRATION_TIME = 30  # minutes
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+EXPIRATION_TIME = settings.EXPIRATION_TIME
 
 
 def create_access_token(*, data: dict, expires_delta: timedelta = None):
@@ -45,7 +47,8 @@ def verify_access_token(token: schemas.TokenData, credentials_exception: Excepti
 
 
 def get_current_user(
-    token: schemas.TokenData = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
+    token: schemas.TokenData = Depends(oauth2_scheme),
+    db: Session = Depends(database.get_db),
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
