@@ -9,5 +9,5 @@
             "vote_direction": "1"
         }
 ✔ 2. Users should only be able to like a post once (post_id/voter_id is unique) @started(22-03-20 14:54) @done(22-03-20 18:53) @lasted(3h59m27s)
-☐ 3. Users should be able to see the number of likes on a post
+✔ 3. Users should be able to see the number of likes on a post @started(22-03-27 12:41) @done(22-03-27 17:13) @lasted(4h32m32s)
 

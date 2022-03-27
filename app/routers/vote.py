@@ -1,13 +1,12 @@
 from app import database, models, oauth2, schemas
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response, status
+from fastapi import (APIRouter, Depends, FastAPI, HTTPException, Response,
+                     status)
 from sqlalchemy.orm import Session
 
 router = APIRouter()
 
 
-@router.post(
-    "/", status_code=status.HTTP_201_CREATED
-)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def vote(
     vote: schemas.Vote,
     db: Session = Depends(database.get_db),
@@ -30,9 +29,7 @@ def vote(
                 detail="You already voted this post up",
             )
         else:
-            new_vote = models.Vote(
-                post_id=vote.post_id, user_id=current_user.id
-            )
+            new_vote = models.Vote(post_id=vote.post_id, user_id=current_user.id)
             db.add(new_vote)
             db.commit()
             db.refresh(new_vote)

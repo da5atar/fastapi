@@ -97,3 +97,9 @@ class GetUserResponse(User):
 
 
 # votes
+class PostWithVoteResponse(BaseModel):
+    Post: PostResponse
+    votes: Optional[int]
+
+    class Config:
+        orm_mode = True
