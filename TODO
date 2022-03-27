@@ -1,0 +1,13 @@
+## Voting/Likes system requirements
+✔ 1. Users should be able to like a post @started(22-03-20 14:54) @done(22-03-20 18:53) @lasted(3h59m23s)
+    1.1 Path will be at vote
+    1.2 The user id will be extracted from the token
+    1.3 The post id will be extracted from the request, as well as the direction of the vote
+    A direction of 1 means we add a like, and 0 means we remove a like
+        {
+            "post_id": "1",
+            "vote_direction": "1"
+        }
+✔ 2. Users should only be able to like a post once (post_id/voter_id is unique) @started(22-03-20 14:54) @done(22-03-20 18:53) @lasted(3h59m27s)
+✔ 3. Users should be able to see the number of likes on a post @started(22-03-27 12:41) @done(22-03-27 17:13) @lasted(4h32m32s)
+
